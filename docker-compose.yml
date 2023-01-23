@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - five-a-side-api:/data/db
+
+  development:
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/five-a-side-api
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+    ports:
+      - ${PORT}:${PORT}
+    command: npm run start:dev
+    depends_on:
+      - mongodb
+
+volumes:
+  five-a-side-api:

@@ -15,6 +15,7 @@ Microservice responsible for creating teams and scheduling football matches with
   - [Description](#description)
   - [Installation](#installation)
   - [Running the app](#running-the-app)
+    - [Docker](#docker)
     - [Development](#development)
     - [Watch mode](#watch-mode)
     - [Production mode](#production-mode)
@@ -58,6 +59,17 @@ npm install
 ```
 
 ## Running the app
+
+### Docker
+If you don't want to debug just run the service through docker with the command
+```bash
+docker compose up
+```
+
+Otherwise, at least make sure the `mongodb` service is running
+```bash
+docker compose up mongodb
+```
 
 ### Development
 ```bash

@@ -70,16 +70,13 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,css,scss,md}": [
+    "*.{json,md}": [
+      "prettier --write"
+    ],
+    "*.{ts,tsx}": [
       "npm run format",
-      "npm run lint",
-      "git add"
+      "npm run lint"
     ]
   }
 }

@@ -24,5 +24,17 @@ services:
     depends_on:
       - mongodb
 
+  tests:
+    build:
+      context: .
+      target: development
+    command: npm test
+
+  lint:
+    build:
+      context: .
+      target: development
+    command: npm run lint
+
 volumes:
   five-a-side-api:

@@ -4,6 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import configuration from './config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+const dotenv = require("dotenv");
+dotenv.config();
 
 @Module({
   imports: [
@@ -14,9 +16,7 @@ import { AppService } from './app.service';
     }),
     MongooseModule.forRootAsync({
       useFactory: async (config: ConfigService) => ({
-        uri: config.get('database.uri'),
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
+        uri: 'mongodb+srv://ds:ds3436388000@cluster0.dpoza.mongodb.net/five-a-side?retryWrites=true&w=majority'
       }),
       inject: [ConfigService],
     }),
@@ -24,4 +24,4 @@ import { AppService } from './app.service';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

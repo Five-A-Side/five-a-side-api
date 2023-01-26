@@ -1,0 +1,86 @@
+{
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:063526891940:task-definition/five-a-side-api-stg:1",
+  "containerDefinitions": [
+    {
+      "name": "five-a-side-api-stg",
+      "image": "063526891940.dkr.ecr.us-east-1.amazonaws.com/five-a-side-api-stg",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "name": "five-a-side-api-stg-80-tcp",
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "environment": [],
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-create-group": "true",
+          "awslogs-group": "/ecs/five-a-side-api-stg",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "family": "five-a-side-api-stg",
+  "taskRoleArn": "arn:aws:iam::063526891940:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::063526891940:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "revision": 1,
+  "volumes": [],
+  "status": "ACTIVE",
+  "requiresAttributes": [
+    {
+      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+    },
+    {
+      "name": "ecs.capability.execution-role-awslogs"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.ecr-auth"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.task-iam-role"
+    },
+    {
+      "name": "ecs.capability.execution-role-ecr-pull"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+    },
+    {
+      "name": "ecs.capability.task-eni"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+    }
+  ],
+  "placementConstraints": [],
+  "compatibilities": ["EC2", "FARGATE"],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "3072",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "registeredAt": "2023-01-28T01:54:17.683Z",
+  "registeredBy": "arn:aws:iam::063526891940:root",
+  "tags": [
+    {
+      "key": "ecs:taskDefinition:createdFrom",
+      "value": "ecs-console-v2"
+    }
+  ]
+}

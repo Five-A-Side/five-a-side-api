@@ -1,14 +1,33 @@
-name: Node.js CI/CD
+# This is a basic workflow to help you get started with Actions
 
+name: Deployment of five-a-side-api
+
+# Controls when the workflow will run
 on:
+  # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ staging ]
+    branches: [ staging ]       
+
+env:
+  AWS_REGION: us-east-1                  # set this to your preferred AWS region, e.g. us-west-1
+  ECR_REPOSITORY: five-a-side-api-stg          # set this to your Amazon ECR repository name
+  ECS_SERVICE: five-a-side-api-service-stg               # set this to your Amazon ECS service name
+  ECS_CLUSTER: five-a-side-api-stg                 # set this to your Amazon ECS cluster name
+  ECS_TASK_DEFINITION: .github/workflows/task-definition.json       # set this to the path to your Amazon ECS task definition                                           # file, e.g. .aws/task-definition.json
+  CONTAINER_NAME: five-a-side-api
+  #MONGO_URI: mongodb+srv://ds:ds3436388000@cluster0.dpoza.mongodb.net/five-a-side?retryWrites=true&w=majority
 
 jobs:
+  
   build:
+    
+    name: Build
     runs-on: ubuntu-latest
+    environment: five-a-side-api-stg
 
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v2
 
@@ -17,27 +36,54 @@ jobs:
       with:
         node-version: 18
 
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build and test
-      run: npm run build && npm test
+    - name: Static Analysis
+      run: docker compose up lint
       env:
         CI: true
 
-    - name: Build the image
-      run: |
-        docker build -f Dockerfile -t five-a-side-api:latest .
-
-    - name: Push the image to Heroku Container Registry
-      run: |
-        heroku container:login
-        heroku container:push development -a five-a-side-api-stg
+    - name: Unit Tests
+      run: docker compose run tests
       env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        CI: true
 
-    - name: Release the image to the app
-      run: |
-        heroku container:release development -a five-a-side-api-stg
+    - name: Integration Tests
+      run: echo "Running Integration Tests"
       env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        CI: true
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: ${{ env.ECS_TASK_DEFINITION }}
+        container-name: ${{ env.CONTAINER_NAME }}
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true

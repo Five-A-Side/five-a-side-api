@@ -1,89 +1,53 @@
-# This is a basic workflow to help you get started with Actions
-
-name: Deployment of five-a-side-api
+name: build and deployment of five-a-side-api microservice
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
+  # Triggers the workflow on push or pull request events but only for the staging branch for testing purposes
   push:
-    branches: [ staging ]       
-
-env:
-  AWS_REGION: us-east-1                  # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: five-a-side-api-stg          # set this to your Amazon ECR repository name
-  ECS_SERVICE: five-a-side-api-service-stg               # set this to your Amazon ECS service name
-  ECS_CLUSTER: five-a-side-api-stg                 # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION: .github/workflows/task-definition.json       # set this to the path to your Amazon ECS task definition                                           # file, e.g. .aws/task-definition.json
-  CONTAINER_NAME: five-a-side-api
-  #MONGO_URI: mongodb+srv://ds:ds3436388000@cluster0.dpoza.mongodb.net/five-a-side?retryWrites=true&w=majority
+    branches: [ staging ]
 
 jobs:
   
   build:
-    
     name: Build
     runs-on: ubuntu-latest
     environment: five-a-side-api-stg
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
 
-    - name: Checkout code
-      uses: actions/checkout@v2
+    - name: Build - Checkout code
+      uses: actions/checkout@v3
 
-    - name: Use Node.js 18
+    - name: Build - Use Node.js 18
       uses: actions/setup-node@v2
       with:
         node-version: 18
 
-    - name: Static Analysis
+    - name: Build - Static Analysis
       run: docker compose up lint
       env:
         CI: true
 
-    - name: Unit Tests
+    - name: Build - Unit Tests
       run: docker compose run tests
       env:
         CI: true
 
-    - name: Integration Tests
+    - name: Build - Integration Tests
       run: echo "Running Integration Tests"
       env:
         CI: true
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+  deploy:
+    name: Deploy
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    runs-on: ubuntu-latest
+    environment: five-a-side-api-stg
+    needs: build
+    steps:
 
-    - name: Build, tag, and push image to Amazon ECR
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v3
 
-    - name: Fill in the new image ID in the Amazon ECS task definition
-      id: task-def
-      uses: aws-actions/amazon-ecs-render-task-definition@v1
-      with:
-        task-definition: ${{ env.ECS_TASK_DEFINITION }}
-        container-name: ${{ env.CONTAINER_NAME }}
-        image: ${{ steps.build-image.outputs.image }}
+      - uses: superfly/flyctl-actions/setup-flyctl@master
 
-    - name: Deploy Amazon ECS task definition
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      with:
-        task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: ${{ env.ECS_SERVICE }}
-        cluster: ${{ env.ECS_CLUSTER }}
-        wait-for-service-stability: true
+      - run: flyctl deploy --remote-only

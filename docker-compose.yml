@@ -19,7 +19,7 @@ services:
     environment:
       - MONGO_URI=mongodb://mongodb:27017
     ports:
-      - "3000:3000"
+      - "8080:8080"
     command: npm run start:dev
     depends_on:
       - mongodb

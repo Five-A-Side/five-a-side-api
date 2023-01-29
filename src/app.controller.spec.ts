@@ -15,7 +15,7 @@ describe('AppController', () => {
   describe('getHello', () => {
     it('should return "Hello World!"', () => {
       const appController = app.get(AppController);
-      expect(appController.getHello()).toBe('Hello World ' + process.env.MONGO_URI);
+      expect(appController.getHello()).toBe('Hello World');
     });
   });
 });

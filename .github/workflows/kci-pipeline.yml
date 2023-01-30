@@ -1,18 +1,22 @@
-name: build and deployment of five-a-side-api microservice
+name: Deployment status
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the staging branch for testing purposes
   push:
-    branches: [ staging ]
+    branches:
+      - staging
+      - '*'
+
+env:
+  STG_APP: five-a-side-api-stg
+  PRD_APP: five-a-side-api-prd
 
 jobs:
-  
   build:
     name: Build
     runs-on: ubuntu-latest
     environment: five-a-side-api-stg
     steps:
+    - uses: superfly/flyctl-actions/setup-flyctl@master
 
     - name: Build - Checkout code
       uses: actions/checkout@v3
@@ -21,6 +25,9 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: 18
+
+      env:
+        CI: true
 
     - name: Build - Static Analysis
       run: docker compose up lint
@@ -33,9 +40,17 @@ jobs:
         CI: true
 
     - name: Build - Integration Tests
-      run: echo "Running Integration Tests"
+      run: echo "Test"
       env:
         CI: true
+
+    - name: Build - Build
+      run: docker build -f Dockerfile -t registry.fly.io/five-a-side-api-stg:${{ github.sha }} .
+
+    - name: Build - Push
+      run: |
+        flyctl auth docker -t ${{ secrets.FLY_API_TOKEN }}
+        docker push registry.fly.io/five-a-side-api-stg:${{ github.sha }}
 
   deploy:
     name: Deploy
@@ -44,10 +59,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: five-a-side-api-stg
     needs: build
+    if: github.ref == 'refs/heads/staging'
     steps:
-
       - uses: actions/checkout@v3
-
       - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - run: flyctl deploy --remote-only
+      
+      - name: Deploy to STG
+        run: flyctl deploy --app ${{ env.STG_APP }} --image registry.fly.io/five-a-side-api-stg:${{ github.sha }} --remote-only

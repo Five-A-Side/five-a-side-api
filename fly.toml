@@ -1,4 +1,4 @@
-# fly.toml file generated for five-a-side-api-stg on 2023-01-29T01:59:16Z
+# fly.toml file generated for five-a-side-api-stg on 2023-01-31T12:01:40Z
 
 app = "five-a-side-api-stg"
 kill_signal = "SIGINT"

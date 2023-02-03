@@ -15,7 +15,7 @@ services:
     volumes:
       - .:/five-a-side-api
     env_file:
-      - .env
+      - .env.local
     environment:
       - MONGO_URI=mongodb://mongodb:27017
     ports:

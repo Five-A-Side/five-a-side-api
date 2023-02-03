@@ -1,0 +1,68 @@
+name: Deployment status
+
+on:
+  push:
+    branches:
+      - staging
+      - '*'
+
+env:
+  STG_APP: five-a-side-api-stg
+  PRD_APP: five-a-side-api-prd
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    environment: five-a-side-api-stg
+    steps:
+    - uses: superfly/flyctl-actions/setup-flyctl@master
+
+    - name: Build - Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build - Use Node.js 18
+      uses: actions/setup-node@v2
+      with:
+        node-version: 18
+
+      env:
+        CI: true
+
+    - name: Build - Static Analysis
+      run: docker compose up lint
+      env:
+        CI: true
+
+    - name: Build - Unit Tests
+      run: docker compose run tests
+      env:
+        CI: true
+
+    - name: Build - Integration Tests
+      run: echo "Test"
+      env:
+        CI: true
+
+    - name: Build - Build
+      run: docker build -f Dockerfile -t registry.fly.io/five-a-side-api-stg:${{ github.sha }} .
+
+    - name: Build - Push
+      run: |
+        flyctl auth docker -t ${{ secrets.FLY_API_TOKEN }}
+        docker push registry.fly.io/five-a-side-api-stg:${{ github.sha }}
+
+  deploy:
+    name: Deploy
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    runs-on: ubuntu-latest
+    environment: five-a-side-api-stg
+    needs: build
+    if: github.ref == 'refs/heads/staging'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      
+      - name: Deploy to STG
+        run: flyctl deploy --app ${{ env.STG_APP }} --image registry.fly.io/five-a-side-api-stg:${{ github.sha }} --remote-only

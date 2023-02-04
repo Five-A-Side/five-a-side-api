@@ -1,15 +1,12 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
-import {
-  utilities as nestWinstonModuleUtilities,
-  WinstonModule,
-} from 'nest-winston';
-import winston, { format } from 'winston';
-import LokiTransport from 'winston-loki';
+import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { DatabaseModule } from './database/database.module';
+import { LoggingModule } from './common/logging/logging.module';
 
 @Module({
   imports: [
@@ -18,39 +15,16 @@ import { AppService } from './app.service';
       envFilePath: ['.env', '.env.local'],
       load: [configuration],
     }),
-    WinstonModule.forRootAsync({
-      useFactory: async (config: ConfigService) => ({
-        transports: [
-          new winston.transports.Console({
-            format: winston.format.combine(
-              winston.format.timestamp(),
-              winston.format.ms(),
-              nestWinstonModuleUtilities.format.nestLike('five-a-side-api'),
-            ),
-          }),
-          new LokiTransport({
-            host: config.get('grafana.loki.host'),
-            basicAuth: `${config.get('grafana.loki.username')}:${config.get(
-              'grafana.loki.password',
-            )}`,
-            labels: { app: 'five-a-side-api' },
-            json: true,
-            format: format.json(),
-            replaceTimestamp: true,
-            onConnectionError: (err) => console.error(err),
-          }),
-        ],
-      }),
-      inject: [ConfigService],
-    }),
-    MongooseModule.forRootAsync({
-      useFactory: async (config: ConfigService) => ({
-        uri: config.get('database.uri'),
-      }),
-      inject: [ConfigService],
-    }),
+    LoggingModule,
+    DatabaseModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}

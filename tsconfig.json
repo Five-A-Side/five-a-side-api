@@ -12,13 +12,6 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "paths": {
-      "y/common": [
-        "libs/common/src"
-      ],
-      "y/common/*": [
-        "libs/common/src/*"
-      ]
-    }
+    "esModuleInterop": true
   }
 }

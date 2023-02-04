@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { DatabaseModule } from './database/database.module';
+import { LoggingModule } from './common/logging/logging.module';
 
 @Module({
   imports: [
@@ -13,15 +16,17 @@ import { UsersModule } from './users/users.module';
       envFilePath: ['.env', '.env.local'],
       load: [configuration],
     }),
-    MongooseModule.forRootAsync({
-      useFactory: async (config: ConfigService) => ({
-        uri: config.get('database.uri'),
-      }),
-      inject: [ConfigService],
-    }),
-    UsersModule,
+    LoggingModule,
+    DatabaseModule,
+    UsersModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule { }

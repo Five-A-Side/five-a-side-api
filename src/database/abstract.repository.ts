@@ -1,4 +1,5 @@
 import { Logger, NotFoundException } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import {
   FilterQuery,
   Model,
@@ -18,12 +19,13 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
   ) { }
 
   async create(
-    document: Omit<TDocument, '_id'>,
+    document: Omit<TDocument, '_id' | 'entityId'>,
     options?: SaveOptions,
   ): Promise<TDocument> {
     const createdDocument = new this.model({
       ...document,
       _id: new Types.ObjectId(),
+      entityId: uuidv4().replace(/-/g, '')
     });
     return (
       await createdDocument.save(options)
@@ -45,9 +47,10 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
     filterQuery: FilterQuery<TDocument>,
     update: UpdateQuery<TDocument>,
   ) {
-    const document = await this.model.findOneAndUpdate(filterQuery, update, {
+    const document = await this.model.findOneAndUpdate(filterQuery, { $set: update }, {
       lean: true,
       new: true,
+      runValidators: true
     });
 
     if (!document) {
@@ -71,6 +74,15 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
 
   async find(filterQuery: FilterQuery<TDocument>) {
     return this.model.find(filterQuery, {}, { lean: true });
+  }
+
+  async deleteOne(filterQuery: FilterQuery<TDocument>): Promise<void> {
+    const document = await this.model.deleteOne(filterQuery);
+
+    if (document.deletedCount === 0) {
+      this.logger.warn(`Document not found with filterQuery:`, filterQuery);
+      throw new NotFoundException('Document not found.');
+    }
   }
 
   async startTransaction() {

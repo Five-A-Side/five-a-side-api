@@ -7,16 +7,11 @@ import {
   IsEmail,
 } from 'class-validator';
 
-export class CreateUserRequest {
-  @IsString()
-  @IsNotEmpty()
-  name: string;
+export class UpdateUserRequest {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(10)
-  username: string;
+  name: string;
 
   @IsString()
   @IsNotEmpty()

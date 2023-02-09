@@ -61,6 +61,17 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
     return document;
   }
 
+  async updateOne(
+    filterQuery: FilterQuery<TDocument>,
+    update: UpdateQuery<TDocument>,
+  ) {
+    return await this.model.updateOne(filterQuery, { $set: update }, {
+      lean: true,
+      new: true,
+      runValidators: true
+    });
+  }
+
   async upsert(
     filterQuery: FilterQuery<TDocument>,
     document: Partial<TDocument>,

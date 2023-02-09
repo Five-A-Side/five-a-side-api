@@ -26,13 +26,13 @@ export class UsersService {
       throw new UserAlreadyExistsException(email);
     }
 
-    const session = await this.usersRepository.startTransaction();
+    //const session = await this.usersRepository.startTransaction();
     try {
       const user = await this.usersRepository.create(request);
-      await session.commitTransaction();
+      //await session.commitTransaction();
       return user;
     } catch (error) {
-      await session.abortTransaction();
+      //await session.abortTransaction();
       throw error;
     }
   }
@@ -43,9 +43,9 @@ export class UsersService {
    * @returns {Promise<User[]>} A promise that resolves to an array of users
    */
   list = async (): Promise<User[]> => {
-    const session = await this.usersRepository.startTransaction();
+    //const session = await this.usersRepository.startTransaction();
     const users: User[] = await this.usersRepository.find({});
-    await session.commitTransaction();
+    //await session.commitTransaction();
     return users;
   }
 
@@ -57,13 +57,13 @@ export class UsersService {
    * @throws {UserNotFoundException} - Thrown if no user is found with the given ID
    */
   findByEntityId = async (entityId: string): Promise<User> => {
-    const session = await this.usersRepository.startTransaction();
+    //const session = await this.usersRepository.startTransaction();
     try {
       const user: User = await this.usersRepository.findOne({ entityId });
-      await session.commitTransaction();
+      //await session.commitTransaction();
       return user;
     } catch (error) {
-      await session.abortTransaction();
+      //await session.abortTransaction();
       throw new UserNotFoundException(entityId);
     }
   }
@@ -85,13 +85,13 @@ export class UsersService {
       throw new UserAlreadyExistsException(email);
     }
 
-    const session = await this.usersRepository.startTransaction();
+    //const session = await this.usersRepository.startTransaction();
     try {
       const user = await this.usersRepository.findOneAndUpdate({ entityId }, request);
-      await session.commitTransaction();
+      //await session.commitTransaction();
       return user;
     } catch (error) {
-      await session.abortTransaction();
+      //await session.abortTransaction();
       throw new UserNotFoundException(entityId);
     }
   }
@@ -104,12 +104,12 @@ export class UsersService {
    * @throws {UserNotFoundException} If the user with the provided ID is not found
    */
   deleteUser = async (entityId: string) => {
-    const session = await this.usersRepository.startTransaction();
+    //const session = await this.usersRepository.startTransaction();
     try {
       await this.usersRepository.deleteOne({ entityId });
-      await session.commitTransaction();
+      //await session.commitTransaction();
     } catch (error) {
-      session.abortTransaction();
+      //session.abortTransaction();
       throw new UserNotFoundException(entityId);
     }
   }
@@ -122,16 +122,15 @@ export class UsersService {
    */
   existsByEmail = async (email: string): Promise<boolean> => {
     let exists = true;
-    const session = await this.usersRepository.startTransaction();
+    //const session = await this.usersRepository.startTransaction();
 
     try {
       await this.usersRepository.findOne({ email });
-      await session.commitTransaction();
+      //await session.commitTransaction();
     } catch (error) {
-      await session.abortTransaction();
+      //await session.abortTransaction();
       exists = false;
     }
-    console.log(exists);
     return exists;
   }
 }

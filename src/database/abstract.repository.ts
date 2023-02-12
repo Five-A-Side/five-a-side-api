@@ -1,4 +1,4 @@
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import {
   FilterQuery,
@@ -16,89 +16,102 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
   constructor(
     protected readonly model: Model<TDocument>,
     private readonly connection: Connection,
-  ) { }
+  ) {}
 
-  async create(
+  create = async (
     document: Omit<TDocument, '_id' | 'entityId'>,
     options?: SaveOptions,
-  ): Promise<TDocument> {
+  ): Promise<TDocument> => {
     const createdDocument = new this.model({
       ...document,
       _id: new Types.ObjectId(),
-      entityId: uuidv4().replace(/-/g, '')
+      entityId: uuidv4().replace(/-/g, ''),
     });
     return (
       await createdDocument.save(options)
     ).toJSON() as unknown as TDocument;
-  }
+  };
 
-  async findOne(filterQuery: FilterQuery<TDocument>): Promise<TDocument> {
-    const document = await this.model.findOne(filterQuery, {}, { lean: true });
+  findOne = async (filterQuery: FilterQuery<TDocument>): Promise<TDocument> => {
+    const document = await this.model.findOne(
+      filterQuery,
+      { _id: 0, password: 0 },
+      { lean: true },
+    );
 
     if (!document) {
       this.logger.warn('Document not found with filterQuery', filterQuery);
-      throw new NotFoundException('Document not found.');
+      return null;
     }
 
     return document;
-  }
+  };
 
-  async findOneAndUpdate(
+  findOneAndUpdate = async (
     filterQuery: FilterQuery<TDocument>,
     update: UpdateQuery<TDocument>,
-  ) {
-    const document = await this.model.findOneAndUpdate(filterQuery, { $set: update }, {
-      lean: true,
-      new: true,
-      runValidators: true
-    });
+  ) => {
+    const document = await this.model.findOneAndUpdate(
+      filterQuery,
+      { $set: update },
+      {
+        lean: true,
+        new: true,
+        runValidators: true,
+        projection: { _id: 0, password: 0 },
+      },
+    );
 
     if (!document) {
       this.logger.warn(`Document not found with filterQuery:`, filterQuery);
-      throw new NotFoundException('Document not found.');
+      return null;
     }
 
     return document;
-  }
+  };
 
-  async updateOne(
+  updateOne = async (
     filterQuery: FilterQuery<TDocument>,
     update: UpdateQuery<TDocument>,
-  ) {
-    return await this.model.updateOne(filterQuery, { $set: update }, {
-      lean: true,
-      new: true,
-      runValidators: true
-    });
-  }
+  ) => {
+    return await this.model.updateOne(
+      filterQuery,
+      { $set: update },
+      {
+        lean: true,
+        new: true,
+        runValidators: true,
+        projection: { _id: 0, password: 0 },
+      },
+    );
+  };
 
-  async upsert(
+  upsert = async (
     filterQuery: FilterQuery<TDocument>,
     document: Partial<TDocument>,
-  ) {
+  ) => {
     return this.model.findOneAndUpdate(filterQuery, document, {
       lean: true,
       upsert: true,
       new: true,
     });
-  }
+  };
 
-  async find(filterQuery: FilterQuery<TDocument>) {
-    return this.model.find(filterQuery, {}, { lean: true });
-  }
+  find = async (filterQuery: FilterQuery<TDocument>) => {
+    return this.model.find(
+      filterQuery,
+      { _id: 0, password: 0 },
+      { lean: true },
+    );
+  };
 
-  async deleteOne(filterQuery: FilterQuery<TDocument>): Promise<void> {
-    const document = await this.model.deleteOne(filterQuery);
+  deleteOne = async (filterQuery: FilterQuery<TDocument>) => {
+    return await this.model.deleteOne(filterQuery);
+  };
 
-    if (document.deletedCount === 0) {
-      this.logger.warn(`Document not found with filterQuery:`, filterQuery);
-      throw new NotFoundException('Document not found.');
-    }
-  }
-
-  async startTransaction() {
+  startTransaction = async () => {
     const session = await this.connection.startSession();
     session.startTransaction();
     return session;
-  }
+  };
 }

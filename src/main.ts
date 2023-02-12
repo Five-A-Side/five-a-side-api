@@ -10,8 +10,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.enableVersioning({
     type: VersioningType.URI,
-    defaultVersion: '1'
-  })
+    defaultVersion: '1',
+  });
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port', 8080);

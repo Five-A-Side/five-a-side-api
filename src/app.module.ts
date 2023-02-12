@@ -18,7 +18,7 @@ import { LoggingModule } from './common/logging/logging.module';
     }),
     LoggingModule,
     DatabaseModule,
-    UsersModule
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [
@@ -29,4 +29,4 @@ import { LoggingModule } from './common/logging/logging.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

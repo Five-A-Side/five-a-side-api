@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpCode,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserRequest } from './dto/create-user.request';
 import { UpdateUserRequest } from './dto/update-user.request';
@@ -6,7 +17,7 @@ import { User } from './schemas/user.schema';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   /**
    * Creates a new user
@@ -22,7 +33,7 @@ export class UsersController {
 
   /**
    * Retrieves the list of all users
-   * 
+   *
    * @returns {Promise<User[]>} A promise that resolves to an array of users
    */
   @Get()
@@ -52,7 +63,10 @@ export class UsersController {
    */
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Patch(':id')
-  async updateUser(@Param('id') id: string, @Body() request: UpdateUserRequest): Promise<User> {
+  async updateUser(
+    @Param('id') id: string,
+    @Body() request: UpdateUserRequest,
+  ): Promise<User> {
     return await this.usersService.updateUser(id, request);
   }
 

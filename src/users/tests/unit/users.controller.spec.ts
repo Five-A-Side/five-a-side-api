@@ -9,66 +9,68 @@ import { UsersService } from '../../users.service';
 import { UsersRepository } from '../../users.repository';
 import { UserAlreadyExistsException } from '../../../common/exceptions/user-already-exists.exception';
 import { UserNotFoundException } from '../../../common/exceptions/user-not-found.exception';
+import { Bcrypt } from '../../../common/utils/bcrypt';
 
 describe('UsersController', () => {
   let usersController: UsersController;
   let usersService: UsersService;
-  let usersRepository: UsersRepository;
 
   const userStub = (): User => {
     return {
-      _id: new Types.ObjectId("63e4e98efbe00c46646bdb10"),
+      _id: new Types.ObjectId('63e4e98efbe00c46646bdb10'),
       entityId: '123',
       name: 'test-name',
       username: 'test-username',
       email: 'test@example.com',
-      password: 'test-password'
-    }
-  }
+      password: 'test-password',
+    };
+  };
 
   const createUserDto = (): CreateUserRequest => {
     return {
       name: 'test-name',
       username: 'test-username',
       email: 'test@example.com',
-      password: 'test-password'
-    }
-  }
+      password: 'test-password',
+    };
+  };
 
   const invalidCreateUserDto = (): CreateUserRequest => {
     return {
       name: '',
       username: 'test-username',
       email: 'test@example.com',
-      password: 'test-password'
-    }
-  }
+      password: 'test-password',
+    };
+  };
 
   const updateUserDto = (): UpdateUserRequest => {
     return {
       name: 'test-name',
       email: 'test@example.com',
-      password: 'test-password'
-    }
-  }
+      password: 'test-password',
+    };
+  };
 
   const invalidUpdateUserDto = (): UpdateUserRequest => {
     return {
       name: 'test-name',
       email: 'test@example.com',
-      password: 'test-password'
-    }
-  }
+      password: 'test-password',
+    };
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [
         UsersService,
+        Bcrypt,
+        UsersRepository,
         {
           provide: UsersRepository,
           useValue: {
-            findOne: jest.fn().mockResolvedValue(userStub())
+            findOne: jest.fn().mockResolvedValue(userStub()),
           },
         },
       ],
@@ -76,7 +78,6 @@ describe('UsersController', () => {
 
     usersController = module.get<UsersController>(UsersController);
     usersService = module.get<UsersService>(UsersService);
-    usersRepository = module.get<UsersRepository>(UsersRepository);
     jest.clearAllMocks();
   });
 
@@ -85,13 +86,19 @@ describe('UsersController', () => {
       describe('when the user is already created with the email provided', () => {
         beforeEach(async () => {
           jest.spyOn(usersService, 'createUser').mockImplementation(() => {
-            return Promise.reject(new UserAlreadyExistsException(createUserDto().email));
+            return Promise.reject(
+              new UserAlreadyExistsException(createUserDto().email),
+            );
           });
         });
 
         test('then is should throw a UserAlreadyExistsException', async () => {
-          await expect(usersController.create(createUserDto())).rejects.toThrowError(`User with email test@example.com already exists`);
-        })
+          await expect(
+            usersController.create(createUserDto()),
+          ).rejects.toThrowError(
+            `User with email test@example.com already exists`,
+          );
+        });
       });
 
       describe('when the create user payload is not valid', () => {
@@ -102,19 +109,23 @@ describe('UsersController', () => {
         });
 
         test('then is should throw a BadRequestException', async () => {
-          await expect(usersController.create(invalidCreateUserDto())).rejects.toThrowError();
-        })
+          await expect(
+            usersController.create(invalidCreateUserDto()),
+          ).rejects.toThrowError();
+        });
       });
 
       describe('when the create user payload valid', () => {
         beforeEach(async () => {
-          jest.spyOn(usersService, 'createUser').mockImplementation(() => Promise.resolve(userStub()));
+          jest
+            .spyOn(usersService, 'createUser')
+            .mockImplementation(() => Promise.resolve(userStub()));
         });
 
         test('then is should create and return th user', async () => {
           const user: User = await usersController.create(createUserDto());
           expect(user).toEqual(userStub());
-        })
+        });
       });
     });
   });
@@ -123,7 +134,9 @@ describe('UsersController', () => {
     describe('when trying to list all the users', () => {
       describe('when the users list is empty', () => {
         beforeEach(async () => {
-          jest.spyOn(usersService, 'list').mockImplementation(() => Promise.resolve([]));
+          jest
+            .spyOn(usersService, 'list')
+            .mockImplementation(() => Promise.resolve([]));
         });
         test('then is should return an empty list of users', async () => {
           const users: User[] = await usersController.list();
@@ -133,7 +146,9 @@ describe('UsersController', () => {
 
       describe('when there are users created', () => {
         beforeEach(async () => {
-          jest.spyOn(usersService, 'list').mockImplementation(() => Promise.resolve([userStub()]));
+          jest
+            .spyOn(usersService, 'list')
+            .mockImplementation(() => Promise.resolve([userStub()]));
         });
         test('then is should return the list of created users', async () => {
           const users: User[] = await usersController.list();
@@ -148,19 +163,25 @@ describe('UsersController', () => {
       describe('when the user does not exists', () => {
         beforeEach(async () => {
           jest.spyOn(usersService, 'findByEntityId').mockImplementation(() => {
-            return Promise.reject(new UserNotFoundException(userStub().entityId));
+            return Promise.reject(
+              new UserNotFoundException(userStub().entityId),
+            );
           });
-        })
+        });
 
         test('then is should throw a UserNotFoundException', async () => {
-          await expect(usersController.getUser(userStub().entityId)).rejects.toThrowError(`User with id 123 not found`);
-        })
-      })
+          await expect(
+            usersController.getUser(userStub().entityId),
+          ).rejects.toThrowError(`User with id 123 not found`);
+        });
+      });
 
       describe('when the user exists', () => {
         beforeEach(async () => {
-          jest.spyOn(usersService, "findByEntityId").mockImplementation(() => Promise.resolve(userStub()));
-        })
+          jest
+            .spyOn(usersService, 'findByEntityId')
+            .mockImplementation(() => Promise.resolve(userStub()));
+        });
 
         test('then is should return a user', async () => {
           const user: User = await usersController.getUser(userStub().entityId);
@@ -175,13 +196,17 @@ describe('UsersController', () => {
       describe('when the user does not exists', () => {
         beforeEach(async () => {
           jest.spyOn(usersService, 'updateUser').mockImplementation(() => {
-            return Promise.reject(new UserNotFoundException(userStub().entityId));
+            return Promise.reject(
+              new UserNotFoundException(userStub().entityId),
+            );
           });
-        })
+        });
 
         test('then is should throw a UserNotFoundException', async () => {
-          await expect(usersController.updateUser(userStub().entityId, updateUserDto())).rejects.toThrowError(`User with id 123 not found`);
-        })
+          await expect(
+            usersController.updateUser(userStub().entityId, updateUserDto()),
+          ).rejects.toThrowError(`User with id 123 not found`);
+        });
       });
 
       describe('when the user exists', () => {
@@ -193,29 +218,45 @@ describe('UsersController', () => {
           });
 
           test('then is should throw a BadRequestException', async () => {
-            await expect(usersController.updateUser(userStub().entityId, invalidUpdateUserDto())).rejects.toThrowError();
-          })
+            await expect(
+              usersController.updateUser(
+                userStub().entityId,
+                invalidUpdateUserDto(),
+              ),
+            ).rejects.toThrowError();
+          });
         });
 
         describe('when the user with the same email already exists', () => {
           beforeEach(async () => {
             jest.spyOn(usersService, 'updateUser').mockImplementation(() => {
-              return Promise.reject(new UserAlreadyExistsException(updateUserDto().email));
+              return Promise.reject(
+                new UserAlreadyExistsException(updateUserDto().email),
+              );
             });
           });
 
           test('then is should throw a UserAlreadyExistsException', async () => {
-            await expect(usersController.updateUser(userStub().entityId, updateUserDto())).rejects.toThrowError(`User with email test@example.com already exists`);
-          })
+            await expect(
+              usersController.updateUser(userStub().entityId, updateUserDto()),
+            ).rejects.toThrowError(
+              `User with email test@example.com already exists`,
+            );
+          });
         });
 
         describe('when the user with the same email does not exists and is valid to update', () => {
           beforeEach(async () => {
-            jest.spyOn(usersService, 'updateUser').mockImplementation(() => Promise.resolve(userStub()));
-          })
+            jest
+              .spyOn(usersService, 'updateUser')
+              .mockImplementation(() => Promise.resolve(userStub()));
+          });
 
           test('then is should return a user', async () => {
-            const user: User = await usersController.updateUser(userStub().entityId, updateUserDto());
+            const user: User = await usersController.updateUser(
+              userStub().entityId,
+              updateUserDto(),
+            );
             expect(user).toEqual(userStub());
           });
         });
@@ -228,19 +269,25 @@ describe('UsersController', () => {
       describe('when the user does not exists', () => {
         beforeEach(async () => {
           jest.spyOn(usersService, 'deleteUser').mockImplementation(() => {
-            return Promise.reject(new UserNotFoundException(userStub().entityId));
+            return Promise.reject(
+              new UserNotFoundException(userStub().entityId),
+            );
           });
-        })
+        });
 
         test('then is should throw a UserNotFoundException', async () => {
-          await expect(usersController.removeUser(userStub().entityId)).rejects.toThrowError(`User with id 123 not found`);
-        })
-      })
+          await expect(
+            usersController.removeUser(userStub().entityId),
+          ).rejects.toThrowError(`User with id 123 not found`);
+        });
+      });
 
       describe('when the user exists', () => {
         beforeEach(async () => {
-          jest.spyOn(usersService, 'deleteUser').mockImplementation(() => Promise.resolve());
-        })
+          jest
+            .spyOn(usersService, 'deleteUser')
+            .mockImplementation(() => Promise.resolve());
+        });
 
         test('then is should delete the user', async () => {
           const user = await usersController.removeUser(userStub().entityId);

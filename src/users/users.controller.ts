@@ -23,7 +23,7 @@ export class UsersController {
    * Creates a new user
    * @param request - Request body containing the user information to be created
    * @returns The newly created user
-   * @throws An error if creating the user fails, it could be 400, 401, etc
+   * @throws An validation error if creating the user fails
    */
   @Post()
   @HttpCode(201)
@@ -59,7 +59,7 @@ export class UsersController {
    * @param {string} id - The id of the user to update.
    * @param {CreateUserRequest} request - The updated information for the user.
    * @returns {Promise<User>} The updated user.
-   * @throws {NotFoundException} If the user could not be found.
+   * @throws {UserNotFoundException} Throws an error if the User with the given ID is not found
    */
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Patch(':id')

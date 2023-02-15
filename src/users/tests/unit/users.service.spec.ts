@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import {
   userStub,
-  userStub2,
   createUserDto,
   invalidCreateUserDto,
   updateUserDto,
@@ -29,6 +28,7 @@ describe('UsersService', () => {
             find: jest.fn().mockResolvedValue([userStub()]),
             deleteOne: jest.fn().mockResolvedValue(userStub()),
             findOneAndUpdate: jest.fn().mockResolvedValue(userStub()),
+            create: jest.fn(),
           },
         },
       ],
@@ -43,49 +43,35 @@ describe('UsersService', () => {
     describe('when trying to create a user', () => {
       describe('when the user is already created with the email provided', () => {
         beforeEach(async () => {
-          jest
-            .spyOn(usersRepository, 'findOne')
-            .mockImplementation(() => Promise.resolve(userStub()));
+          jest.spyOn(usersRepository, 'create').mockImplementation(() => {
+            return Promise.reject(new BadRequestException());
+          });
         });
 
-        test('then is should throw a UserAlreadyExistsException', async () => {
+        test('then is should throw a BadRequestException', async () => {
           await expect(
             usersService.createUser(createUserDto()),
-          ).rejects.toThrowError(
-            `User with email test@example.com already exists`,
-          );
+          ).rejects.toThrowError(BadRequestException);
         });
       });
 
       describe('when the username has been already taken', () => {
         beforeEach(async () => {
-          jest
-            .spyOn(usersRepository, 'findOne')
-            .mockImplementation((filterQuery) => {
-              if (filterQuery.email) {
-                return null;
-              } else {
-                return Promise.resolve(userStub());
-              }
-            });
+          jest.spyOn(usersRepository, 'create').mockImplementation(() => {
+            return Promise.reject(new BadRequestException());
+          });
         });
 
-        test('then is should throw a UsernameAlreadyTakenException', async () => {
+        test('then is should throw a BadRequestException', async () => {
           await expect(
             usersService.createUser(createUserDto()),
-          ).rejects.toThrowError(
-            `That username test-username has already been taken`,
-          );
+          ).rejects.toThrowError(BadRequestException);
         });
       });
 
       describe('when the create user payload is not valid', () => {
         beforeEach(async () => {
-          jest.spyOn(usersRepository, 'findOne').mockImplementation(() => {
-            return null;
-          });
-
-          jest.spyOn(usersService, 'createUser').mockImplementation(() => {
+          jest.spyOn(usersRepository, 'create').mockImplementation(() => {
             return Promise.reject(new BadRequestException());
           });
         });
@@ -93,15 +79,12 @@ describe('UsersService', () => {
         test('then is should throw a BadRequestException', async () => {
           await expect(
             usersService.createUser(invalidCreateUserDto()),
-          ).rejects.toThrowError();
+          ).rejects.toThrowError(BadRequestException);
         });
       });
 
       describe('when the create user payload valid', () => {
         beforeEach(async () => {
-          jest.spyOn(usersRepository, 'findOne').mockImplementation(() => {
-            return null;
-          });
           jest
             .spyOn(usersService, 'createUser')
             .mockImplementation(() => Promise.resolve(userStub()));
@@ -176,9 +159,11 @@ describe('UsersService', () => {
     describe('when trying to update a user', () => {
       describe('when the user does not exists', () => {
         beforeEach(async () => {
-          jest.spyOn(usersRepository, 'findOne').mockImplementation(() => {
-            return null;
-          });
+          jest
+            .spyOn(usersRepository, 'findOneAndUpdate')
+            .mockImplementation(() => {
+              return null;
+            });
         });
 
         test('then is should throw a UserNotFoundException', async () => {
@@ -192,8 +177,10 @@ describe('UsersService', () => {
         describe('when the updated user payload is not valid', () => {
           beforeEach(async () => {
             jest
-              .spyOn(usersRepository, 'findOne')
-              .mockImplementation(() => Promise.resolve(userStub()));
+              .spyOn(usersRepository, 'findOneAndUpdate')
+              .mockImplementation(() =>
+                Promise.reject(new BadRequestException()),
+              );
           });
 
           test('then is should throw a BadRequestException', async () => {
@@ -202,43 +189,32 @@ describe('UsersService', () => {
                 userStub().entityId,
                 invalidUpdateUserDto(),
               ),
-            ).rejects.toThrowError();
+            ).rejects.toThrowError(BadRequestException);
           });
         });
 
         describe('when the user with the same email already exists', () => {
           beforeEach(async () => {
-            //jest.spyOn(usersRepository, 'findOne').mockImplementation(() => Promise.resolve(userStub()));
             jest
-              .spyOn(usersRepository, 'findOne')
-              .mockImplementation((filterQuery) => {
-                if (filterQuery.email) {
-                  return Promise.resolve(userStub2());
-                } else {
-                  return Promise.resolve(userStub());
-                }
+              .spyOn(usersRepository, 'findOneAndUpdate')
+              .mockImplementation(() => {
+                return Promise.reject(new BadRequestException());
               });
           });
 
-          test('then is should throw a UserAlreadyExistsException', async () => {
+          test('then is should throw a BadRequestException', async () => {
             await expect(
               usersService.updateUser(userStub().entityId, updateUserDto()),
-            ).rejects.toThrowError(
-              `User with email test2@example.com already exists`,
-            );
+            ).rejects.toThrowError(BadRequestException);
           });
         });
 
         describe('when the user with the same email does not exists and is valid to update', () => {
           beforeEach(async () => {
             jest
-              .spyOn(usersRepository, 'findOne')
-              .mockImplementation((filterQuery) => {
-                if (filterQuery.email) {
-                  return null;
-                } else {
-                  return Promise.resolve(userStub());
-                }
+              .spyOn(usersRepository, 'findOneAndUpdate')
+              .mockImplementation(() => {
+                return Promise.resolve(userStub());
               });
           });
 

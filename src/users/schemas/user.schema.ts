@@ -1,5 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { AbstractDocument } from '../../database/abstract.schema';
+import uniqueValidator from 'mongoose-unique-validator';
 
 @Schema({ versionKey: false })
 export class User extends AbstractDocument {
@@ -9,10 +10,10 @@ export class User extends AbstractDocument {
   @Prop()
   name: string;
 
-  @Prop()
+  @Prop({ unique: true })
   username: string;
 
-  @Prop()
+  @Prop({ unique: true })
   email: string;
 
   @Prop()
@@ -20,3 +21,4 @@ export class User extends AbstractDocument {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.plugin(uniqueValidator);

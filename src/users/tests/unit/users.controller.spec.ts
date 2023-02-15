@@ -7,8 +7,7 @@ import { User } from '../../schemas/user.schema';
 import { UsersController } from '../../users.controller';
 import { UsersService } from '../../users.service';
 import { UsersRepository } from '../../users.repository';
-import { UserAlreadyExistsException } from '../../../common/exceptions/user-already-exists.exception';
-import { UserNotFoundException } from '../../../common/exceptions/user-not-found.exception';
+import { UserNotFoundException } from '../../exceptions/user-not-found.exception';
 import { Bcrypt } from '../../../common/utils/bcrypt';
 
 describe('UsersController', () => {
@@ -47,16 +46,16 @@ describe('UsersController', () => {
   const updateUserDto = (): UpdateUserRequest => {
     return {
       name: 'test-name',
+      username: 'test-username',
       email: 'test@example.com',
-      password: 'test-password',
     };
   };
 
   const invalidUpdateUserDto = (): UpdateUserRequest => {
     return {
       name: 'test-name',
+      username: 'test-username',
       email: 'test@example.com',
-      password: 'test-password',
     };
   };
 
@@ -86,18 +85,14 @@ describe('UsersController', () => {
       describe('when the user is already created with the email provided', () => {
         beforeEach(async () => {
           jest.spyOn(usersService, 'createUser').mockImplementation(() => {
-            return Promise.reject(
-              new UserAlreadyExistsException(createUserDto().email),
-            );
+            return Promise.reject(new BadRequestException());
           });
         });
 
         test('then is should throw a UserAlreadyExistsException', async () => {
           await expect(
             usersController.create(createUserDto()),
-          ).rejects.toThrowError(
-            `User with email test@example.com already exists`,
-          );
+          ).rejects.toThrowError(BadRequestException);
         });
       });
 
@@ -223,25 +218,21 @@ describe('UsersController', () => {
                 userStub().entityId,
                 invalidUpdateUserDto(),
               ),
-            ).rejects.toThrowError();
+            ).rejects.toThrowError(BadRequestException);
           });
         });
 
         describe('when the user with the same email already exists', () => {
           beforeEach(async () => {
             jest.spyOn(usersService, 'updateUser').mockImplementation(() => {
-              return Promise.reject(
-                new UserAlreadyExistsException(updateUserDto().email),
-              );
+              return Promise.reject(new BadRequestException());
             });
           });
 
           test('then is should throw a UserAlreadyExistsException', async () => {
             await expect(
               usersController.updateUser(userStub().entityId, updateUserDto()),
-            ).rejects.toThrowError(
-              `User with email test@example.com already exists`,
-            );
+            ).rejects.toThrowError(BadRequestException);
           });
         });
 

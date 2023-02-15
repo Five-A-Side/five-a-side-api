@@ -29,6 +29,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "mongoose": "^6.8.4",
+    "mongoose-unique-validator": "^3.1.0",
     "nest-winston": "^1.8.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.5.5",

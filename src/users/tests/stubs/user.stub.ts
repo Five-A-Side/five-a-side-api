@@ -46,15 +46,15 @@ export const invalidCreateUserDto = (): CreateUserRequest => {
 export const updateUserDto = (): UpdateUserRequest => {
   return {
     name: 'test-name',
+    username: 'test-username',
     email: 'test2@example.com',
-    password: 'test-password',
   };
 };
 
 export const invalidUpdateUserDto = (): UpdateUserRequest => {
   return {
     name: '',
+    username: 'test-username',
     email: 'test2@example.com',
-    password: 'test-password',
   };
 };

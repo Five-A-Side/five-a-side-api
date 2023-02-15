@@ -50,7 +50,7 @@ export abstract class AbstractRepository<TDocument extends AbstractDocument> {
   findOneAndUpdate = async (
     filterQuery: FilterQuery<TDocument>,
     update: UpdateQuery<TDocument>,
-  ) => {
+  ): Promise<TDocument> => {
     const document = await this.model.findOneAndUpdate(
       filterQuery,
       { $set: update },
